@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"lemna/logger"
 	"lemna/rpc"
-	"log"
 	"time"
 	"unicode/utf8"
 	"volcano/message"
@@ -33,33 +32,44 @@ func init() {
 	client.msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
+func (c *Client) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{"token": "token1"}, nil
+}
+
+func (c *Client) RequireTransportSecurity() bool {
+	return false
+}
+
 func (client *Client) Run() {
 	for {
-		conn, err := grpc.Dial(client.addr, grpc.WithInsecure(), grpc.WithBlock())
+		conn, err := grpc.Dial(client.addr,
+			grpc.WithInsecure(),
+			grpc.WithBlock(),
+			grpc.WithPerRPCCredentials(client))
 		if err != nil {
+			logger.Error(err)
 			return
-		} else {
-			ac := rpc.NewClientClient(conn)
-			ctx := context.Background()
-			var header metadata.MD
-			_, err := ac.Register(ctx, &rpc.ClientRegMsg{Token: "token1"}, grpc.Header(&header))
+		}
+		ac := rpc.NewClientClient(conn)
+		ctx := context.Background()
+		var header metadata.MD
+		_, err = ac.Register(ctx, &rpc.ClientRegMsg{Token: "token1"}, grpc.Header(&header))
+		if err == nil {
+			client.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
 			if err == nil {
-				client.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
-				if err == nil {
-					logger.Info("agent is alive.")
-					for {
-						in, err := client.stream.Recv()
-						if err != nil {
-							log.Println(err)
-							break
-						}
-						client.msgcenter.Handle(in, client.stream)
+				logger.Info("agent is alive.")
+				for {
+					var in *rpc.ForwardMsg
+					in, err = client.stream.Recv()
+					if err != nil {
+						break
 					}
+					client.msgcenter.Handle(in, client.stream)
 				}
 			}
-			log.Println(err)
-			conn.Close()
 		}
+		conn.Close()
+		logger.Error(err)
 		time.Sleep(time.Second * 5)
 	}
 }
