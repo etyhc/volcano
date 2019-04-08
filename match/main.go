@@ -1,8 +1,11 @@
 package main
 
 import (
+	"flag"
+	"lemna/agent/rpc"
+	"lemna/config"
+	configrpc "lemna/config/rpc"
 	"lemna/logger"
-	"lemna/rpc"
 	"log"
 	"volcano/message"
 )
@@ -10,27 +13,48 @@ import (
 type MatchService struct {
 	service *rpc.ServerService
 	name    string
+	info    config.ServerConfig
 }
-
-var match *MatchService
 
 func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
 	m := msg.(*message.HiMsg)
 	log.Println(m)
 	s := stream.(rpc.Server_ForwardServer)
-	m.Msg = "I'm match"
+	m.Msg = "I'm " + match.name
 	sendmsg, err := match.service.Msgcenter.Wrap(id, m)
 	if err == nil {
 		s.Send(sendmsg)
 	}
 }
+
+var match *MatchService
+var addr *string
+var h *bool
+
 func init() {
-	match = &MatchService{service: &rpc.ServerService{Addr: ":10002", Typeid: 1, Msgcenter: rpc.NewMsgCenter()}, name: "Match"}
+	addr = flag.String("addr", ":10002", "要绑定的地址")
+	h = flag.Bool("h", false, "this help")
+	match = &MatchService{}
+	match.name = "匹配"
+	match.service = &rpc.ServerService{Addr: *addr, Typeid: 2, Msgcenter: rpc.NewMsgCenter()}
 	match.service.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
 func main() {
-	err := match.service.Run()
+	flag.Parse()
+	if *h {
+		flag.Usage()
+		return
+	}
+	match.service.Addr = *addr
+	match.info.Addr = *addr
+	finder := &configrpc.ChannelUser{Addr: configrpc.ConfigServerAddr}
+	err := finder.Publish(&match.info)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	err = match.service.Run()
 	if err != nil {
 		logger.Error(err)
 	}
