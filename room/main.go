@@ -13,7 +13,7 @@ import (
 type RoomService struct {
 	service *rpc.ServerService
 	name    string
-	info    config.ServerConfig
+	info    config.ServerInfo
 }
 
 func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
@@ -38,7 +38,8 @@ func init() {
 	room = &RoomService{}
 	room.name = "房间"
 	room.service = &rpc.ServerService{Addr: *addr, Typeid: 1, Msgcenter: rpc.NewMsgCenter()}
-	room.info = config.ServerConfig{Addr: room.service.Addr, Type: room.service.Typeid}
+	room.info.Type = room.service.Typeid
+	room.info.Sche = config.SERVERSCHEROUND
 	room.service.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 

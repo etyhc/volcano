@@ -13,7 +13,7 @@ import (
 type MatchService struct {
 	service *rpc.ServerService
 	name    string
-	info    config.ServerConfig
+	info    config.ServerInfo
 }
 
 func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
@@ -38,6 +38,8 @@ func init() {
 	match = &MatchService{}
 	match.name = "匹配"
 	match.service = &rpc.ServerService{Addr: *addr, Typeid: 2, Msgcenter: rpc.NewMsgCenter()}
+	match.info.Type = match.service.Typeid
+	match.info.Sche = config.SERVERSCHEROUND
 	match.service.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
