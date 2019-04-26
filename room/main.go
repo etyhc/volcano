@@ -21,9 +21,10 @@ func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
 	s := stream.(rpc.Server_ForwardServer)
 	logger.Info(utf8.RuneCountInString(m.Msg), "   ", m.Msg)
 	m.Msg = "I'm " + room.name
-	sendmsg, err := room.service.Msgcenter.Wrap(id, m)
+	sendmsg, err := room.service.Msgcenter.WrapBroadcast([]int32{id}, m)
 	if err == nil {
-		s.Send(sendmsg)
+		err = s.Send(sendmsg)
+		logger.Error(err)
 	}
 }
 
@@ -37,7 +38,7 @@ func init() {
 	room = &RoomService{}
 	room.name = "房间"
 	room.service = &rpc.ServerService{Addr: *addr, Typeid: 1, Msgcenter: rpc.NewMsgCenter()}
-	room.info = config.ServerConfig{Name: room.name, Addr: room.service.Addr, Type: room.service.Typeid}
+	room.info = config.ServerConfig{Addr: room.service.Addr, Type: room.service.Typeid}
 	room.service.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 

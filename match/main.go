@@ -21,9 +21,10 @@ func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
 	log.Println(m)
 	s := stream.(rpc.Server_ForwardServer)
 	m.Msg = "I'm " + match.name
-	sendmsg, err := match.service.Msgcenter.Wrap(id, m)
+	sendmsg, err := match.service.Msgcenter.WrapBroadcast([]int32{id}, m)
 	if err == nil {
-		s.Send(sendmsg)
+		err = s.Send(sendmsg)
+		logger.Error(err)
 	}
 }
 

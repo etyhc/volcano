@@ -16,7 +16,7 @@ import (
 type Client struct {
 	name      string
 	addr      string
-	stream    rpc.Server_ForwardClient
+	stream    rpc.Client_ForwardClient
 	msgcenter *rpc.MsgCenter
 }
 
@@ -53,7 +53,7 @@ func (client *Client) Run() {
 		ac := rpc.NewClientClient(conn)
 		ctx := context.Background()
 		var header metadata.MD
-		_, err = ac.Register(ctx, &rpc.ClientRegMsg{Token: "token1"}, grpc.Header(&header))
+		_, err = ac.Login(ctx, &rpc.LoginMsg{Token: "token1"}, grpc.Header(&header))
 		if err == nil {
 			client.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
 			if err == nil {
@@ -64,7 +64,10 @@ func (client *Client) Run() {
 					if err != nil {
 						break
 					}
-					client.msgcenter.Handle(in, client.stream)
+					err = client.msgcenter.Handle(in, client.stream)
+					if err != nil {
+						logger.Error(err)
+					}
 				}
 			}
 		}
@@ -86,7 +89,10 @@ func (client *Client) Input() {
 		logger.Info(utf8.RuneCountInString(msg), "   ", msg)
 		send, err := client.msgcenter.Wrap(servertype, &message.HiMsg{Msg: msg})
 		if err == nil {
-			client.stream.Send(send)
+			err = client.stream.Send(send)
+			if err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 }
