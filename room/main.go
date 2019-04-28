@@ -1,64 +1,28 @@
 package main
 
 import (
-	"flag"
-	"lemna/agent/rpc"
+	"fmt"
 	"lemna/config"
-	configrpc "lemna/config/rpc"
 	"lemna/logger"
 	"unicode/utf8"
 	"volcano/message"
+	"volcano/service"
 )
 
-type RoomService struct {
-	service *rpc.ServerService
-	name    string
-	info    config.ServerInfo
-}
-
-func Handler_HiMsg(id int32, msg interface{}, stream interface{}) {
+func Handler_HiMsg(id int32, msg interface{}) {
 	m := msg.(*message.HiMsg)
-	s := stream.(rpc.Server_ForwardServer)
 	logger.Info(utf8.RuneCountInString(m.Msg), "   ", m.Msg)
-	m.Msg = "I'm " + room.name
-	sendmsg, err := room.service.Msgcenter.WrapBroadcast([]int32{id}, m)
-	if err == nil {
-		err = s.Send(sendmsg)
-		logger.Error(err)
-	}
+	m.Msg = fmt.Sprintf("hi %d,I'm %s.", id, room.Name)
+	room.Rpcss.Send(id, m)
 }
 
-var room *RoomService
-var addr *string
-var h *bool
+var room *service.Service
 
 func init() {
-	addr = flag.String("addr", ":10001", "要绑定的地址")
-	h = flag.Bool("h", false, "this help")
-	room = &RoomService{}
-	room.name = "房间"
-	room.service = &rpc.ServerService{Addr: *addr, Typeid: 1, Msgcenter: rpc.NewMsgCenter()}
-	room.info.Type = room.service.Typeid
-	room.info.Sche = config.SERVERSCHEROUND
-	room.service.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
+	room = service.NewService(message.SERVICE_ROOM, config.SERVERSCHENIL)
+	room.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
 func main() {
-	flag.Parse()
-	if *h {
-		flag.Usage()
-		return
-	}
-	room.service.Addr = *addr
-	room.info.Addr = *addr
-	finder := &configrpc.ChannelUser{Addr: configrpc.ConfigServerAddr}
-	err := finder.Publish(&room.info)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	err = room.service.Run()
-	if err != nil {
-		logger.Error(err)
-	}
+	room.Main()
 }

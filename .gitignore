@@ -1,3 +1,4 @@
-client/client
-room/room
-match/match
+client
+room
+match
+lobby

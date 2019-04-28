@@ -20,7 +20,7 @@ type Client struct {
 	msgcenter *rpc.MsgCenter
 }
 
-func Handler_HiMsg(t int32, msg interface{}, stream interface{}) {
+func Handler_HiMsg(t int32, msg interface{}) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
 }
@@ -64,7 +64,7 @@ func (client *Client) Run() {
 					if err != nil {
 						break
 					}
-					err = client.msgcenter.Handle(in, client.stream)
+					err = client.msgcenter.Handle(in)
 					if err != nil {
 						logger.Error(err)
 					}
