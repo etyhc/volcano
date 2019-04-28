@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"lemna/config"
+	"lemna/agent"
 	"lemna/logger"
 	"unicode/utf8"
 	"volcano/message"
@@ -19,7 +19,7 @@ func Handler_HiMsg(id int32, msg interface{}) {
 var room *service.Service
 
 func init() {
-	room = service.NewService(message.SERVICE_ROOM, config.SERVERSCHENIL)
+	room = service.NewService(message.SERVICE_ROOM, agent.SERVERSCHENIL)
 	room.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 

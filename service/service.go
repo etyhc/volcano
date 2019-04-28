@@ -3,9 +3,9 @@ package service
 import (
 	"flag"
 	"fmt"
+	"lemna/agent"
 	"lemna/agent/rpc"
-	"lemna/config"
-	configrpc "lemna/config/rpc"
+	contentrpc "lemna/content/rpc"
 	"lemna/logger"
 	"volcano/message"
 )
@@ -13,7 +13,7 @@ import (
 type Service struct {
 	Rpcss   *rpc.ServerService
 	Name    string
-	info    config.ServerInfo
+	info    agent.ServerInfo
 	addr    *string
 	channel *string
 	h       *bool
@@ -22,7 +22,7 @@ type Service struct {
 func NewService(sid message.SERVICE, sche int32) *Service {
 	ret := &Service{}
 	ret.addr = flag.String("addr", ":1000"+fmt.Sprint(int32(sid)), "要绑定的地址")
-	ret.addr = flag.String("chan", configrpc.ConfigServerAddr, "发布自己的地址")
+	ret.addr = flag.String("chan", contentrpc.SERVERADDR, "发布自己的内容服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
 	ret.Rpcss = &rpc.ServerService{
@@ -42,7 +42,7 @@ func (s *Service) Main() {
 	}
 	s.Rpcss.Addr = *s.addr
 	s.info.Addr = *s.addr
-	channel := &configrpc.ChannelUser{Addr: *s.channel}
+	channel := &contentrpc.Channel{Addr: *s.channel}
 	err := channel.Publish(&s.info)
 	if err != nil {
 		logger.Error(err)

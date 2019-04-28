@@ -1,7 +1,7 @@
 package main
 
 import (
-	"lemna/config"
+	"lemna/agent"
 	"lemna/logger"
 	"unicode/utf8"
 	"volcano/message"
@@ -18,7 +18,7 @@ func Handler_HiMsg(id int32, msg interface{}) {
 var lobby *service.Service
 
 func init() {
-	lobby = service.NewService(message.SERVICE_LOBBY, config.SERVERSCHEROUND)
+	lobby = service.NewService(message.SERVICE_LOBBY, agent.SERVERSCHEROUND)
 	lobby.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
