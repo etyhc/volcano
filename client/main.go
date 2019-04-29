@@ -87,7 +87,7 @@ func (client *Client) Input() {
 			break
 		}
 		logger.Info(utf8.RuneCountInString(msg), "   ", msg)
-		send, err := client.msgcenter.Wrap(servertype, &message.HiMsg{Msg: msg})
+		send, err := client.msgcenter.WrapFM(servertype, &message.HiMsg{Msg: msg})
 		if err == nil {
 			err = client.stream.Send(send)
 			if err != nil {
