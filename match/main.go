@@ -16,11 +16,16 @@ func Handler_HiMsg(id int32, msg interface{}) {
 	match.Rpcss.Send(id, m)
 }
 
+func Handler_ClientLogoutMsg(id int32, msg interface{}) {
+	logger.Info(id, " Client logout")
+}
+
 var match *service.Service
 
 func init() {
-	match = service.NewService(message.SERVICE_MATCH, agent.SERVERSCHENIL)
+	match = service.NewService(message.SERVICE_MATCH, agent.SERVERSCHEROUND)
 	match.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
+	match.Rpcss.Msgcenter.Reg(&agent.ClientLogoutMsg{}, Handler_ClientLogoutMsg)
 }
 
 func main() {

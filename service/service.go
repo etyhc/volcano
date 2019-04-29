@@ -22,7 +22,7 @@ type Service struct {
 func NewService(sid message.SERVICE, sche int32) *Service {
 	ret := &Service{}
 	ret.addr = flag.String("addr", ":1000"+fmt.Sprint(int32(sid)), "要绑定的地址")
-	ret.addr = flag.String("chan", contentrpc.SERVERADDR, "发布自己的内容服务器地址")
+	ret.channel = flag.String("chan", contentrpc.SERVERADDR, "发布自己的内容服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
 	ret.Rpcss = &rpc.ServerService{
