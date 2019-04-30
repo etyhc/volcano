@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"lemna/agent"
 	"lemna/agent/rpc"
+	"lemna/content/redis"
 	contentrpc "lemna/content/rpc"
 	"lemna/logger"
 	"volcano/message"
@@ -12,6 +13,7 @@ import (
 
 type Service struct {
 	Rpcss   *rpc.ServerService
+	Redis   *redis.Channel
 	Name    string
 	info    agent.ServerInfo
 	addr    *string
@@ -31,6 +33,7 @@ func NewService(sid message.SERVICE, sche int32) *Service {
 		Msgcenter: rpc.NewMsgCenter()}
 	ret.info.Type = ret.Rpcss.Typeid
 	ret.info.Sche = sche
+	ret.Redis = &redis.Channel{Addr: redis.REDISADDR}
 	return ret
 }
 

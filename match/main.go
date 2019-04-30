@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"lemna/agent"
 	"lemna/logger"
-	"unicode/utf8"
 	"volcano/message"
 	"volcano/service"
 )
 
 func Handler_HiMsg(id int32, msg interface{}) {
 	m := msg.(*message.HiMsg)
-	logger.Info(utf8.RuneCountInString(m.Msg), "   ", m.Msg)
-	m.Msg = fmt.Sprintf("hi %d,I'm %s.", id, match.Name)
+	logger.Infof("<%d>%s", id, m.Msg)
+	m.Msg = fmt.Sprintf("hi %d,I'm %s. your msg=\"%s\"", id, match.Name, m.Msg)
+	err := match.Redis.Publish(&message.HiContent{Uid: id})
+	if err != nil {
+		logger.Error(err)
+	}
 	match.Rpcss.Send(id, m)
 }
 

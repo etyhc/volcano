@@ -6,7 +6,6 @@ import (
 	"lemna/agent/rpc"
 	"lemna/logger"
 	"time"
-	"unicode/utf8"
 	"volcano/message"
 
 	"google.golang.org/grpc"
@@ -86,7 +85,6 @@ func (client *Client) Input() {
 		if servertype == 0 {
 			break
 		}
-		logger.Info(utf8.RuneCountInString(msg), "   ", msg)
 		send, err := client.msgcenter.WrapFM(servertype, &message.HiMsg{Msg: msg})
 		if err == nil {
 			err = client.stream.Send(send)
