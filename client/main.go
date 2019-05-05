@@ -8,6 +8,7 @@ import (
 	"time"
 	"volcano/message"
 
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -19,7 +20,19 @@ type Client struct {
 	msgcenter *rpc.MsgCenter
 }
 
-func Handler_HiMsg(t int32, msg interface{}) {
+func (c *Client) Broadcast(targets []int32, msg interface{}) error {
+	return fmt.Errorf("unsupport")
+}
+
+func (c *Client) Forward(target int32, msg interface{}) error {
+	send, err := client.msgcenter.WrapFM(target, msg.(proto.Message))
+	if err == nil {
+		err = c.stream.Send(send)
+	}
+	return err
+}
+
+func Handler_HiMsg(t int32, msg interface{}, from rpc.MsgPeer) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
 }
@@ -63,7 +76,7 @@ func (client *Client) Run() {
 					if err != nil {
 						break
 					}
-					err = client.msgcenter.Handle(in)
+					err = client.msgcenter.Handle(in, client)
 					if err != nil {
 						logger.Error(err)
 					}
@@ -85,12 +98,9 @@ func (client *Client) Input() {
 		if servertype == 0 {
 			break
 		}
-		send, err := client.msgcenter.WrapFM(servertype, &message.HiMsg{Msg: msg})
-		if err == nil {
-			err = client.stream.Send(send)
-			if err != nil {
-				logger.Error(err)
-			}
+		err := client.Forward(servertype, &message.HiMsg{Msg: msg})
+		if err != nil {
+			logger.Error(err)
 		}
 	}
 }

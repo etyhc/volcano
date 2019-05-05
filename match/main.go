@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"lemna/agent"
+	"lemna/agent/rpc"
 	"lemna/logger"
 	"volcano/message"
 	"volcano/service"
 )
 
-func Handler_HiMsg(id int32, msg interface{}) {
+func Handler_HiMsg(id int32, msg interface{}, from rpc.MsgPeer) {
 	m := msg.(*message.HiMsg)
 	logger.Infof("<%d>%s", id, m.Msg)
 	m.Msg = fmt.Sprintf("hi %d,I'm %s. your msg=\"%s\"", id, match.Name, m.Msg)
@@ -16,10 +17,10 @@ func Handler_HiMsg(id int32, msg interface{}) {
 	if err != nil {
 		logger.Error(err)
 	}
-	match.Rpcss.Send(id, m)
+	from.Forward(id, m)
 }
 
-func Handler_ClientLogoutMsg(id int32, msg interface{}) {
+func Handler_ClientLogoutMsg(id int32, msg interface{}, from rpc.MsgPeer) {
 	logger.Info(id, " Client logout")
 }
 

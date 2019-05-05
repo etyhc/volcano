@@ -3,20 +3,21 @@ package main
 import (
 	"fmt"
 	"lemna/agent"
+	"lemna/agent/rpc"
 	"lemna/logger"
 	"unicode/utf8"
 	"volcano/message"
 	"volcano/service"
 )
 
-func Handler_HiMsg(fromid int32, msg interface{}) {
+func Handler_HiMsg(fromid int32, msg interface{}, from rpc.MsgPeer) {
 	himsg := msg.(*message.HiMsg)
 	logger.Info(utf8.RuneCountInString(himsg.Msg), "   ", himsg.Msg)
 	himsg.Msg = fmt.Sprintf("hi %d,I'm %s.", fromid, room.service.Name)
-	room.service.Rpcss.Send(fromid, himsg)
+	from.Forward(fromid, himsg)
 }
 
-func Handler_ClientLogoutMsg(fromid int32, msg interface{}) {
+func Handler_ClientLogoutMsg(fromid int32, msg interface{}, from rpc.MsgPeer) {
 	logger.Info(fromid, " logout")
 }
 
@@ -48,8 +49,9 @@ func init() {
 }
 
 func Handler_HiContent(hc *message.HiContent) {
-	himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.Uid, room.service.Name)}
-	room.service.Rpcss.Send(hc.Uid, &himsg)
+	//TODO 找到用户所在的代理服务器
+	//himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.Uid, room.service.Name)}
+	//room.service.Rpcss.Send(hc.Uid, &himsg)
 }
 
 func main() {
