@@ -37,7 +37,7 @@ func (r Room) Subscribe() error {
 	go func() {
 		for {
 			hc := <-hichan
-			Handler_HiContent(hc.(*message.HiContent))
+			onHiContent(hc.(*message.HiContent))
 		}
 	}()
 	return nil
@@ -49,10 +49,9 @@ func init() {
 	room.service.Rpcss.Msgcenter.Reg(&agent.ClientByeMsg{}, Handler_ClientLogoutMsg)
 }
 
-func Handler_HiContent(hc *message.HiContent) {
-	//TODO 找到用户所在的代理服务器
+func onHiContent(hc *message.HiContent) {
 	himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.UID, room.service.Name)}
-	s := room.service.Rpcss.Get(hc.Addr)
+	s := room.service.Rpcss.Get(hc.AID)
 	if s != nil {
 		s.Forward(hc.UID, &himsg)
 	}

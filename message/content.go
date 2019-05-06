@@ -1,8 +1,8 @@
 package message
 
 type HiContent struct {
-	UID  int32  `json:"uid"`
-	Addr string `json:"addr"`
+	UID int32  `json:"uid"`
+	AID uint32 `json:"aid"`
 }
 
 func (hc *HiContent) Topic() string {

@@ -24,6 +24,10 @@ func (c *Client) Broadcast(targets []int32, msg interface{}) error {
 	return fmt.Errorf("unsupport")
 }
 
+func (c *Client) ID() uint32 {
+	return 0
+}
+
 func (c *Client) Forward(target int32, msg interface{}) error {
 	send, err := client.msgcenter.WrapFM(target, msg.(proto.Message))
 	if err == nil {
