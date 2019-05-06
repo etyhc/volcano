@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"lemna/agent/rpc"
+	"lemna/agent/arpc"
 	"lemna/logger"
 	"time"
 	"volcano/message"
@@ -16,8 +16,8 @@ import (
 type Client struct {
 	name      string
 	addr      string
-	stream    rpc.Client_ForwardClient
-	msgcenter *rpc.MsgCenter
+	stream    arpc.Client_ForwardClient
+	msgcenter *arpc.MsgCenter
 }
 
 func (c *Client) Broadcast(targets []int32, msg interface{}) error {
@@ -32,7 +32,11 @@ func (c *Client) Forward(target int32, msg interface{}) error {
 	return err
 }
 
-func Handler_HiMsg(t int32, msg interface{}, from rpc.MsgPeer) {
+func (c *Client) GetPeerAddr() (string, bool) {
+	return "", false
+}
+
+func Handler_HiMsg(t int32, msg interface{}, from arpc.MsgServer) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
 }
@@ -40,7 +44,7 @@ func Handler_HiMsg(t int32, msg interface{}, from rpc.MsgPeer) {
 var client *Client
 
 func init() {
-	client = &Client{name: "我", addr: ":9999", msgcenter: rpc.NewMsgCenter()}
+	client = &Client{name: "我", addr: ":9999", msgcenter: arpc.NewMsgCenter()}
 	client.msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
 }
 
@@ -62,16 +66,16 @@ func (client *Client) Run() {
 			logger.Error(err)
 			return
 		}
-		ac := rpc.NewClientClient(conn)
+		ac := arpc.NewClientClient(conn)
 		ctx := context.Background()
 		var header metadata.MD
-		_, err = ac.Login(ctx, &rpc.LoginMsg{Token: "token1"}, grpc.Header(&header))
+		_, err = ac.Login(ctx, &arpc.LoginMsg{Token: "token1"}, grpc.Header(&header))
 		if err == nil {
 			client.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
 			if err == nil {
 				logger.Info("agent is alive.")
 				for {
-					var in *rpc.ForwardMsg
+					var in *arpc.ForwardMsg
 					in, err = client.stream.Recv()
 					if err != nil {
 						break

@@ -3,21 +3,22 @@ package main
 import (
 	"fmt"
 	"lemna/agent"
-	"lemna/agent/rpc"
+	"lemna/agent/arpc"
+	"lemna/agent/server"
 	"lemna/logger"
 	"unicode/utf8"
 	"volcano/message"
 	"volcano/service"
 )
 
-func Handler_HiMsg(fromid int32, msg interface{}, from rpc.MsgPeer) {
+func Handler_HiMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
 	himsg := msg.(*message.HiMsg)
 	logger.Info(utf8.RuneCountInString(himsg.Msg), "   ", himsg.Msg)
 	himsg.Msg = fmt.Sprintf("hi %d,I'm %s.", fromid, room.service.Name)
 	from.Forward(fromid, himsg)
 }
 
-func Handler_ClientLogoutMsg(fromid int32, msg interface{}, from rpc.MsgPeer) {
+func Handler_ClientLogoutMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
 	logger.Info(fromid, " logout")
 }
 
@@ -43,15 +44,18 @@ func (r Room) Subscribe() error {
 }
 
 func init() {
-	room.service = service.NewService(message.SERVICE_ROOM, agent.SERVERSCHENIL)
+	room.service = service.NewService(message.SERVICE_ROOM, server.SERVERSCHENIL)
 	room.service.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
-	room.service.Rpcss.Msgcenter.Reg(&agent.ClientLogoutMsg{}, Handler_ClientLogoutMsg)
+	room.service.Rpcss.Msgcenter.Reg(&agent.ClientByeMsg{}, Handler_ClientLogoutMsg)
 }
 
 func Handler_HiContent(hc *message.HiContent) {
 	//TODO 找到用户所在的代理服务器
-	//himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.Uid, room.service.Name)}
-	//room.service.Rpcss.Send(hc.Uid, &himsg)
+	himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.UID, room.service.Name)}
+	s := room.service.Rpcss.Get(hc.Addr)
+	if s != nil {
+		s.Forward(hc.UID, &himsg)
+	}
 }
 
 func main() {
