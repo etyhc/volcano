@@ -11,14 +11,14 @@ import (
 	"volcano/service"
 )
 
-func Handler_HiMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
+func onHiMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
 	himsg := msg.(*message.HiMsg)
 	logger.Info(utf8.RuneCountInString(himsg.Msg), "   ", himsg.Msg)
 	himsg.Msg = fmt.Sprintf("hi %d,I'm %s.", fromid, room.service.Name)
 	from.Forward(fromid, himsg)
 }
 
-func Handler_ClientLogoutMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
+func onInvalidTargetMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
 	logger.Info(fromid, " logout")
 }
 
@@ -45,8 +45,8 @@ func (r Room) Subscribe() error {
 
 func init() {
 	room.service = service.NewService(message.SERVICE_ROOM, server.SERVERSCHENIL)
-	room.service.Rpcss.Msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
-	room.service.Rpcss.Msgcenter.Reg(&agent.ClientByeMsg{}, Handler_ClientLogoutMsg)
+	room.service.Rpcss.Msgcenter.Reg(&message.HiMsg{}, onHiMsg)
+	room.service.Rpcss.Msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func onHiContent(hc *message.HiContent) {

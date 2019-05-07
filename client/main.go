@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"lemna/agent"
 	"lemna/agent/arpc"
 	"lemna/logger"
 	"time"
@@ -36,20 +37,20 @@ func (c *Client) Forward(target int32, msg interface{}) error {
 	return err
 }
 
-func (c *Client) GetPeerAddr() (string, bool) {
-	return "", false
-}
-
-func Handler_HiMsg(t int32, msg interface{}, from arpc.MsgServer) {
+func onHiMsg(t int32, msg interface{}, from arpc.MsgServer) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
+}
+func onInvalidTargetMsg(t int32, msg interface{}, from arpc.MsgServer) {
+	logger.Error("no server typeid=", t)
 }
 
 var client *Client
 
 func init() {
 	client = &Client{name: "我", addr: ":9999", msgcenter: arpc.NewMsgCenter()}
-	client.msgcenter.Reg(&message.HiMsg{}, Handler_HiMsg)
+	client.msgcenter.Reg(&message.HiMsg{}, onHiMsg)
+	client.msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func (c *Client) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
