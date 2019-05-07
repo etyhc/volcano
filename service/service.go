@@ -8,6 +8,7 @@ import (
 	"lemna/content/crpc"
 	"lemna/content/redis"
 	"lemna/logger"
+	"time"
 	"volcano/message"
 )
 
@@ -46,13 +47,23 @@ func (s *Service) Main() {
 	s.Rpcss.Addr = *s.addr
 	s.info.Addr = *s.addr
 	channel := &crpc.Channel{Addr: *s.channel}
-	err := channel.Publish(&s.info)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	err = s.Rpcss.Run()
-	if err != nil {
-		logger.Error(err)
-	}
+	//延迟发布，否则先发布再起服务有问题
+	over := make(chan int)
+	go func() {
+		tick := time.Tick(time.Second)
+		<-tick
+		err := channel.Publish(&s.info)
+		if err != nil {
+			logger.Error(err)
+			over <- 1
+		}
+	}()
+	go func() {
+		err := s.Rpcss.Run()
+		if err != nil {
+			logger.Error(err)
+		}
+		over <- 1
+	}()
+	<-over
 }
