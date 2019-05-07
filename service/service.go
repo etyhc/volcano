@@ -8,6 +8,7 @@ import (
 	"lemna/content/crpc"
 	"lemna/content/redis"
 	"lemna/logger"
+	"lemna/utils"
 	"time"
 	"volcano/message"
 )
@@ -45,7 +46,7 @@ func (s *Service) Main() {
 		return
 	}
 	s.Rpcss.Addr = *s.addr
-	s.info.Addr = *s.addr
+	s.info.Addr = utils.PublishTCPAddr(*s.addr)
 	channel := &crpc.Channel{Addr: *s.channel}
 	//延迟发布，否则先发布再起服务有问题
 	over := make(chan int)
@@ -56,6 +57,8 @@ func (s *Service) Main() {
 		if err != nil {
 			logger.Error(err)
 			over <- 1
+		} else {
+			logger.Info("Publish addr=", s.info.Addr)
 		}
 	}()
 	go func() {
