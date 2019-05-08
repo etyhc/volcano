@@ -37,11 +37,11 @@ func (c *Client) Forward(target int32, msg interface{}) error {
 	return err
 }
 
-func onHiMsg(t int32, msg interface{}, from arpc.MsgServer) {
+func onHiMsg(t int32, msg interface{}, from arpc.MsgStream) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
 }
-func onInvalidTargetMsg(t int32, msg interface{}, from arpc.MsgServer) {
+func onInvalidTargetMsg(t int32, msg interface{}, from arpc.MsgStream) {
 	logger.Error("no server typeid=", t)
 }
 

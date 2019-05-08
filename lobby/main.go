@@ -10,14 +10,14 @@ import (
 	"volcano/service"
 )
 
-func onHiMsg(id int32, msg interface{}, from arpc.MsgServer) {
+func onHiMsg(id int32, msg interface{}, from arpc.MsgStream) {
 	m := msg.(*message.HiMsg)
 	logger.Debug(utf8.RuneCountInString(m.Msg), "   ", m.Msg)
 	m.Msg = "I'm " + lobby.Name
 	from.Forward(id, m)
 }
 
-func onInvalidTargetMsg(fromid int32, msg interface{}, from arpc.MsgServer) {
+func onInvalidTargetMsg(fromid int32, msg interface{}, from arpc.MsgStream) {
 	logger.Info(fromid, " logout")
 }
 
