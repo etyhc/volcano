@@ -21,7 +21,7 @@ type Client struct {
 	msgcenter *arpc.MsgCenter
 }
 
-func (c *Client) Broadcast(targets []int32, msg interface{}) error {
+func (c *Client) Broadcast(targets []uint32, msg interface{}) error {
 	return fmt.Errorf("unsupport")
 }
 
@@ -29,7 +29,7 @@ func (c *Client) ID() uint32 {
 	return 0
 }
 
-func (c *Client) Forward(target int32, msg interface{}) error {
+func (c *Client) Forward(target uint32, msg interface{}) error {
 	send, err := client.msgcenter.WrapFM(target, msg.(proto.Message))
 	if err == nil {
 		err = c.stream.Send(send)
@@ -37,11 +37,11 @@ func (c *Client) Forward(target int32, msg interface{}) error {
 	return err
 }
 
-func onHiMsg(t int32, msg interface{}, from arpc.MsgStream) {
+func onHiMsg(t uint32, msg interface{}, from arpc.MsgStream) {
 	m := msg.(*message.HiMsg)
 	logger.Info(m.Msg)
 }
-func onInvalidTargetMsg(t int32, msg interface{}, from arpc.MsgStream) {
+func onInvalidTargetMsg(t uint32, msg interface{}, from arpc.MsgStream) {
 	logger.Error("no server typeid=", t)
 }
 
@@ -100,7 +100,7 @@ func (client *Client) Run() {
 
 func (client *Client) Input() {
 	for {
-		var servertype int32
+		var servertype uint32
 		var msg string
 		//time.Sleep(time.Second)
 		fmt.Scanf("%d %s\n", &servertype, &msg)

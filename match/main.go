@@ -10,7 +10,7 @@ import (
 	"volcano/service"
 )
 
-func onHiMsg(id int32, msg interface{}, from arpc.MsgStream) {
+func onHiMsg(id uint32, msg interface{}, from arpc.MsgStream) {
 	m := msg.(*message.HiMsg)
 	m.Msg = fmt.Sprintf("hi %d,I'm %s. your msg=\"%s\"", id, match.Name, m.Msg)
 	logger.Debugf("<%d>%s,%d", id, m.Msg, from.ID())
@@ -21,7 +21,7 @@ func onHiMsg(id int32, msg interface{}, from arpc.MsgStream) {
 	from.Forward(id, m)
 }
 
-func onInvalidTargetMsg(id int32, msg interface{}, from arpc.MsgStream) {
+func onInvalidTargetMsg(id uint32, msg interface{}, from arpc.MsgStream) {
 	logger.Info(id, " Client logout")
 }
 

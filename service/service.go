@@ -25,7 +25,7 @@ type Service struct {
 }
 
 // NewService 新服务器rpc服务
-func NewService(sid message.SERVICE, sche int32) *Service {
+func NewService(sid message.SERVICE, sche uint32) *Service {
 	ret := &Service{}
 	ret.addr = flag.String("addr", ":1000"+fmt.Sprint(int32(sid)), "要绑定的地址")
 	ret.channel = flag.String("chan", crpc.SERVERADDR, "发布自己的内容服务器地址")
@@ -33,7 +33,7 @@ func NewService(sid message.SERVICE, sche int32) *Service {
 	ret.Name = sid.String()
 	ret.Rpcss = &arpc.ServerService{
 		Addr:      *ret.addr,
-		Typeid:    int32(sid),
+		Typeid:    uint32(sid),
 		Msgcenter: arpc.NewMsgCenter()}
 	ret.info.Type = ret.Rpcss.Typeid
 	ret.info.Sche = sche
