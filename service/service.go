@@ -13,16 +13,18 @@ import (
 	"volcano/message"
 )
 
+// Service  服务器通用服务封装
 type Service struct {
-	Rpcss   *arpc.ServerService
-	Redis   *redis.Channel
-	Name    string
-	info    server.ServerInfo
-	addr    *string
-	channel *string
-	h       *bool
+	Rpcss   *arpc.ServerService //服务器rpc服务
+	Redis   *redis.Channel      //redis订阅频道,用于服务器间数据的订阅发布
+	Name    string              //服务器名字
+	info    server.Info         //服务器信息
+	addr    *string             //参数，服务器侦听地址
+	channel *string             //参数，发布自己信息频道地址
+	h       *bool               //参数，帮助
 }
 
+// NewService 新服务器rpc服务
 func NewService(sid message.SERVICE, sche int32) *Service {
 	ret := &Service{}
 	ret.addr = flag.String("addr", ":1000"+fmt.Sprint(int32(sid)), "要绑定的地址")
@@ -39,6 +41,8 @@ func NewService(sid message.SERVICE, sche int32) *Service {
 	return ret
 }
 
+// Main 运行服务
+//      启动rpc服务，然后发布自己的信息
 func (s *Service) Main() {
 	flag.Parse()
 	if *s.h {
