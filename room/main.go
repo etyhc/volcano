@@ -45,8 +45,8 @@ func (r Room) Subscribe() error {
 
 func init() {
 	room.service = service.NewService(message.SERVICE_ROOM, server.SERVERSCHENIL)
-	room.service.Rpcss.Msgcenter.Reg(&message.HiMsg{}, onHiMsg)
-	room.service.Rpcss.Msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
+	room.service.Mc.Reg(&message.HiMsg{}, onHiMsg)
+	room.service.Mc.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func onHiContent(hc *message.HiContent) {

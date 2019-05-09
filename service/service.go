@@ -15,13 +15,15 @@ import (
 
 // Service  服务器通用服务封装
 type Service struct {
-	Rpcss   *arpc.ServerService //服务器rpc服务
-	Redis   *redis.Channel      //redis订阅频道,用于服务器间数据的订阅发布
-	Name    string              //服务器名字
-	info    server.Info         //服务器信息
-	addr    *string             //参数，服务器侦听地址
-	channel *string             //参数，发布自己信息频道地址
-	h       *bool               //参数，帮助
+	Rpcss *arpc.ServerService //服务器rpc服务
+	Redis *redis.Channel      //redis订阅频道,用于服务器间数据的订阅发布
+	Name  string              //服务器名字
+	info  server.Info         //服务器信息
+	Mc    *arpc.MsgCenter
+
+	addr    *string //参数，服务器侦听地址
+	channel *string //参数，发布自己信息频道地址
+	h       *bool   //参数，帮助
 }
 
 // NewService 新服务器rpc服务
@@ -31,13 +33,10 @@ func NewService(sid message.SERVICE, sche uint32) *Service {
 	ret.channel = flag.String("chan", crpc.SERVERADDR, "发布自己的内容服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
-	ret.Rpcss = &arpc.ServerService{
-		Addr:      *ret.addr,
-		Typeid:    uint32(sid),
-		Msgcenter: arpc.NewMsgCenter()}
-	ret.info.Type = ret.Rpcss.Typeid
+	ret.info.Type = uint32(sid)
 	ret.info.Sche = sche
 	ret.Redis = &redis.Channel{Addr: redis.REDISADDR}
+	ret.Mc = arpc.NewMsgCenter()
 	return ret
 }
 
@@ -49,7 +48,7 @@ func (s *Service) Main() {
 		flag.Usage()
 		return
 	}
-	s.Rpcss.Addr = *s.addr
+	s.Rpcss = arpc.NewServerService(*s.addr, s.info.Type, s.Mc)
 	s.info.Addr = utils.PublishTCPAddr(*s.addr)
 	channel := &crpc.Channel{Addr: *s.channel}
 	//延迟发布，否则先发布再起服务有问题

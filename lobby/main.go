@@ -25,8 +25,8 @@ var lobby *service.Service
 
 func init() {
 	lobby = service.NewService(message.SERVICE_LOBBY, server.SERVERSCHEROUND)
-	lobby.Rpcss.Msgcenter.Reg(&message.HiMsg{}, onHiMsg)
-	lobby.Rpcss.Msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
+	lobby.Mc.Reg(&message.HiMsg{}, onHiMsg)
+	lobby.Mc.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func main() {

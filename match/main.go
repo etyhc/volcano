@@ -29,8 +29,8 @@ var match *service.Service
 
 func init() {
 	match = service.NewService(message.SERVICE_MATCH, server.SERVERSCHEROUND)
-	match.Rpcss.Msgcenter.Reg(&message.HiMsg{}, onHiMsg)
-	match.Rpcss.Msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
+	match.Mc.Reg(&message.HiMsg{}, onHiMsg)
+	match.Mc.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func main() {
