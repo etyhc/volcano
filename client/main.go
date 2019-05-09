@@ -30,7 +30,7 @@ func (c *Client) ID() uint32 {
 }
 
 func (c *Client) Forward(target uint32, msg interface{}) error {
-	send, err := client.msgcenter.WrapFM(target, msg.(proto.Message))
+	send, err := c.msgcenter.WrapFM(target, msg.(proto.Message))
 	if err == nil {
 		err = c.stream.Send(send)
 	}
@@ -61,12 +61,12 @@ func (c *Client) RequireTransportSecurity() bool {
 	return false
 }
 
-func (client *Client) Run() {
+func (c *Client) Run() {
 	for {
-		conn, err := grpc.Dial(client.addr,
+		conn, err := grpc.Dial(c.addr,
 			grpc.WithInsecure(),
 			grpc.WithBlock(),
-			grpc.WithPerRPCCredentials(client))
+			grpc.WithPerRPCCredentials(c))
 		if err != nil {
 			logger.Error(err)
 			return
@@ -76,16 +76,16 @@ func (client *Client) Run() {
 		var header metadata.MD
 		_, err = ac.Login(ctx, &arpc.LoginMsg{Token: "token1"}, grpc.Header(&header))
 		if err == nil {
-			client.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
+			c.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
 			if err == nil {
 				logger.Info("agent is alive.")
 				for {
 					var in *arpc.ForwardMsg
-					in, err = client.stream.Recv()
+					in, err = c.stream.Recv()
 					if err != nil {
 						break
 					}
-					err = client.msgcenter.Handle(in, client)
+					err = c.msgcenter.Handle(in, c)
 					if err != nil {
 						logger.Error(err)
 					}
@@ -98,7 +98,7 @@ func (client *Client) Run() {
 	}
 }
 
-func (client *Client) Input() {
+func (c *Client) Input() {
 	for {
 		var servertype uint32
 		var msg string
@@ -107,7 +107,7 @@ func (client *Client) Input() {
 		if servertype == 0 {
 			break
 		}
-		err := client.Forward(servertype, &message.HiMsg{Msg: msg})
+		err := c.Forward(servertype, &message.HiMsg{Msg: msg})
 		if err != nil {
 			logger.Error(err)
 		}
