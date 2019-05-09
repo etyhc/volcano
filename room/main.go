@@ -15,7 +15,7 @@ func onHiMsg(fromid uint32, msg interface{}, from arpc.MsgStream) {
 	himsg := msg.(*message.HiMsg)
 	logger.Info(utf8.RuneCountInString(himsg.Msg), "   ", himsg.Msg)
 	himsg.Msg = fmt.Sprintf("hi %d,I'm %s.", fromid, room.service.Name)
-	from.Forward(fromid, himsg)
+	_ = from.Forward(fromid, himsg)
 }
 
 func onInvalidTargetMsg(fromid uint32, msg interface{}, from arpc.MsgStream) {
@@ -53,7 +53,7 @@ func onHiContent(hc *message.HiContent) {
 	himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.UID, room.service.Name)}
 	s := room.service.Rpcss.Get(hc.AID)
 	if s != nil {
-		s.Forward(hc.UID, &himsg)
+		_ = s.Forward(hc.UID, &himsg)
 	}
 }
 

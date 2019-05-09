@@ -14,7 +14,7 @@ func onHiMsg(id uint32, msg interface{}, from arpc.MsgStream) {
 	m := msg.(*message.HiMsg)
 	logger.Debug(utf8.RuneCountInString(m.Msg), "   ", m.Msg)
 	m.Msg = "I'm " + lobby.Name
-	from.Forward(id, m)
+	_ = from.Forward(id, m)
 }
 
 func onInvalidTargetMsg(fromid uint32, msg interface{}, from arpc.MsgStream) {

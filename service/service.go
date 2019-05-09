@@ -55,8 +55,9 @@ func (s *Service) Main() {
 	//延迟发布，否则先发布再起服务有问题
 	over := make(chan int)
 	go func() {
-		tick := time.Tick(time.Second)
-		<-tick
+		tick := time.NewTicker(time.Second)
+		<-tick.C
+		tick.Stop()
 		err := channel.Publish(&s.info)
 		if err != nil {
 			logger.Error(err)

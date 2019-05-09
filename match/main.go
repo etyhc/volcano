@@ -18,7 +18,7 @@ func onHiMsg(id uint32, msg interface{}, from arpc.MsgStream) {
 	if err != nil {
 		logger.Error(err)
 	}
-	from.Forward(id, m)
+	_ = from.Forward(id, m)
 }
 
 func onInvalidTargetMsg(id uint32, msg interface{}, from arpc.MsgStream) {
