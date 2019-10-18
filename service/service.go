@@ -2,42 +2,42 @@ package service
 
 import (
 	"flag"
-	"fmt"
-	"lemna/agent/arpc"
-	"lemna/agent/server"
-	"lemna/content/crpc"
-	"lemna/content/redis"
+	"lemna/arpc"
+	"lemna/arpc/server"
 	"lemna/logger"
+	"lemna/msg"
 	"lemna/utils"
-	"time"
 	"volcano/message"
 )
 
 // Service  服务器通用服务封装
 type Service struct {
-	Rpcss *arpc.ServerService //服务器rpc服务
-	Redis *redis.Channel      //redis订阅频道,用于服务器间数据的订阅发布
-	Name  string              //服务器名字
-	info  server.Info         //服务器信息
-	Mc    *arpc.MsgCenter
+	Name string //服务器名字
+	Proc *msg.Processor
+	srpc server.Srpc
 
-	addr    *string //参数，服务器侦听地址
-	channel *string //参数，发布自己信息频道地址
-	h       *bool   //参数，帮助
+	addr *string //参数，代理地址
+	h    *bool   //参数，帮助
 }
 
 // NewService 新服务器rpc服务
 func NewService(sid message.SERVICE, sche uint32) *Service {
 	ret := &Service{}
-	ret.addr = flag.String("addr", ":1000"+fmt.Sprint(int32(sid)), "要绑定的地址")
-	ret.channel = flag.String("chan", crpc.SERVERADDR, "发布自己的内容服务器地址")
+	ret.addr = flag.String("addr", ":10000", "代理服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
-	ret.info.Type = uint32(sid)
-	ret.info.Sche = sche
-	ret.Redis = &redis.Channel{Addr: redis.REDISADDR}
-	ret.Mc = arpc.NewMsgCenter()
+	ret.srpc.Info.Type = uint32(sid)
+	ret.srpc.Info.Sche = sche
+	ret.Proc = msg.NewProcessor(msg.ProtoHelper{})
 	return ret
+}
+
+func (s *Service) Send(target uint32, msg interface{}) error {
+	fmsg, err := s.Proc.WrapFM(target, msg)
+	if err == nil {
+		return s.srpc.Send(fmsg)
+	}
+	return err
 }
 
 // Main 运行服务
@@ -48,28 +48,25 @@ func (s *Service) Main() {
 		flag.Usage()
 		return
 	}
-	s.Rpcss = arpc.NewServerService(*s.addr, s.info.Type, s.Mc)
-	s.info.Addr = utils.PublishTCPAddr(*s.addr)
-	channel := &crpc.Channel{Addr: *s.channel}
-	//延迟发布，否则先发布再起服务有问题
+	s.srpc.Info.Addr = utils.PublishTCPAddr(*s.addr)
+	s.srpc.Addr = *s.addr
 	over := make(chan int)
 	go func() {
-		tick := time.NewTicker(time.Second)
-		<-tick.C
-		tick.Stop()
-		err := channel.Publish(&s.info)
-		if err != nil {
-			logger.Error(err)
-			over <- 1
-		} else {
-			logger.Info("Publish addr=", s.info.Addr)
+		err := s.srpc.Connect()
+		if err == nil {
+			for {
+				var in *arpc.ForwardMsg
+				in, err = s.srpc.Recv()
+				if err != nil {
+					break
+				}
+				err = s.Proc.Handle(in, s)
+				if err != nil {
+					logger.Error(err)
+				}
+			}
 		}
-	}()
-	go func() {
-		err := s.Rpcss.Run()
-		if err != nil {
-			logger.Error(err)
-		}
+		logger.Error(err)
 		over <- 1
 	}()
 	<-over

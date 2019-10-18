@@ -1,104 +1,66 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"lemna/agent"
-	"lemna/agent/arpc"
+	"lemna/arpc"
+	"lemna/arpc/client"
 	"lemna/logger"
-	"time"
+	"lemna/msg"
 	"volcano/message"
-
-	"github.com/golang/protobuf/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
-type Client struct {
-	name      string
-	addr      string
-	stream    arpc.Client_ForwardClient
-	msgcenter *arpc.MsgCenter
+type RPC struct {
+	name string
+	crpc client.Crpc
+	proc *msg.Processor
 }
 
-func (c *Client) Broadcast(targets []uint32, msg interface{}) error {
-	return fmt.Errorf("unsupport")
+func onHiMsg(t uint32, msg interface{}, from msg.Stream) {
+	m := msg.(*message.HiMsg)
+	logger.Info(m.Msg)
 }
 
-func (c *Client) ID() uint32 {
-	return 0
-}
+var rpc *RPC
 
-func (c *Client) Forward(target uint32, msg interface{}) error {
-	send, err := c.msgcenter.WrapFM(target, msg.(proto.Message))
+func init() {
+	rpc = &RPC{}
+	rpc.name = "我"
+	rpc.crpc.Token = "token1"
+	rpc.crpc.Addr = ":9999"
+	rpc.proc = msg.NewProcessor(msg.ProtoHelper{})
+	rpc.proc.Reg(&message.HiMsg{}, onHiMsg)
+}
+func (r *RPC) Send(target uint32, msg interface{}) error {
+	fmsg, err := r.proc.WrapFM(target, msg)
 	if err == nil {
-		err = c.stream.Send(send)
+		return r.crpc.Send(fmsg)
 	}
 	return err
 }
 
-func onHiMsg(t uint32, msg interface{}, from arpc.MsgStream) {
-	m := msg.(*message.HiMsg)
-	logger.Info(m.Msg)
-}
-func onInvalidTargetMsg(t uint32, msg interface{}, from arpc.MsgStream) {
-	logger.Error("no server typeid=", t)
-}
-
-var client *Client
-
-func init() {
-	client = &Client{name: "我", addr: ":9999", msgcenter: arpc.NewMsgCenter()}
-	client.msgcenter.Reg(&message.HiMsg{}, onHiMsg)
-	client.msgcenter.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
-}
-
-func (c *Client) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{"token": "token1"}, nil
-}
-
-func (c *Client) RequireTransportSecurity() bool {
-	return false
-}
-
-func (c *Client) Run() {
+func (r *RPC) Run() {
 	for {
-		conn, err := grpc.Dial(c.addr,
-			grpc.WithInsecure(),
-			grpc.WithBlock(),
-			grpc.WithPerRPCCredentials(c))
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		ac := arpc.NewClientClient(conn)
-		ctx := context.Background()
-		var header metadata.MD
-		_, err = ac.Login(ctx, &arpc.LoginMsg{Token: "token1"}, grpc.Header(&header))
+		err := r.crpc.Login()
 		if err == nil {
-			c.stream, err = ac.Forward(metadata.NewOutgoingContext(ctx, header))
-			if err == nil {
-				logger.Info("agent is alive.")
-				for {
-					var in *arpc.ForwardMsg
-					in, err = c.stream.Recv()
-					if err != nil {
-						break
-					}
-					err = c.msgcenter.Handle(in, c)
-					if err != nil {
-						logger.Error(err)
-					}
+			for {
+				logger.Infof("登录%s成功", r.crpc.Addr)
+				var in *arpc.ForwardMsg
+				in, err = r.crpc.Recv()
+				if err != nil {
+					break
+				}
+				err = r.proc.Handle(in, r)
+				if err != nil {
+					logger.Error(err)
 				}
 			}
 		}
-		conn.Close()
 		logger.Error(err)
-		time.Sleep(time.Second * 5)
+		logger.Errorf("Login %s error. relogin...", r.crpc.Addr)
 	}
 }
 
-func (c *Client) Input() {
+func (r *RPC) Input() {
 	for {
 		var servertype uint32
 		var msg string
@@ -107,7 +69,7 @@ func (c *Client) Input() {
 		if servertype == 0 {
 			break
 		}
-		err := c.Forward(servertype, &message.HiMsg{Msg: msg})
+		err := r.Send(servertype, &message.HiMsg{Msg: msg})
 		if err != nil {
 			logger.Error(err)
 		}
@@ -115,6 +77,6 @@ func (c *Client) Input() {
 }
 
 func main() {
-	go client.Run()
-	client.Input()
+	go rpc.Run()
+	rpc.Input()
 }
