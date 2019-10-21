@@ -42,8 +42,8 @@ func (r *RPC) Run() {
 	for {
 		err := r.crpc.Login()
 		if err == nil {
+			logger.Infof("登录%s成功，等待输入指令", r.crpc.Addr)
 			for {
-				logger.Infof("登录%s成功", r.crpc.Addr)
 				var in *arpc.ForwardMsg
 				in, err = r.crpc.Recv()
 				if err != nil {
