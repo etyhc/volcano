@@ -2,23 +2,23 @@ package main
 
 import (
 	"fmt"
-	"lemna/agent"
-	"lemna/agent/arpc"
+	"lemna/agent/proto"
 	"lemna/agent/server"
 	"lemna/logger"
+	"lemna/msg"
 	"unicode/utf8"
 	"volcano/message"
 	"volcano/service"
 )
 
-func onHiMsg(fromid uint32, msg interface{}, from arpc.MsgStream) {
+func onHiMsg(fromid uint32, msg interface{}, from msg.Stream) {
 	himsg := msg.(*message.HiMsg)
 	logger.Info(utf8.RuneCountInString(himsg.Msg), "   ", himsg.Msg)
 	himsg.Msg = fmt.Sprintf("hi %d,I'm %s.", fromid, room.service.Name)
-	_ = from.Forward(fromid, himsg)
+	_ = from.Send(fromid, himsg)
 }
 
-func onInvalidTargetMsg(fromid uint32, msg interface{}, from arpc.MsgStream) {
+func onInvalidTargetMsg(fromid uint32, msg interface{}, from msg.Stream) {
 	logger.Info(fromid, " logout")
 }
 
@@ -28,38 +28,17 @@ type Room struct {
 
 var room Room
 
-func (r Room) Subscribe() error {
-	hichan, err := room.service.Redis.Subscribe(&message.HiContent{})
-	if err != nil {
-		logger.Error(err)
-		return err
-	}
-	go func() {
-		for {
-			hc := <-hichan
-			onHiContent(hc.(*message.HiContent))
-		}
-	}()
-	return nil
-}
-
 func init() {
 	room.service = service.NewService(message.SERVICE_ROOM, server.SERVERSCHENIL)
-	room.service.Mc.Reg(&message.HiMsg{}, onHiMsg)
-	room.service.Mc.Reg(&agent.InvalidTargetMsg{}, onInvalidTargetMsg)
+	room.service.Proc.Reg(&message.HiMsg{}, onHiMsg)
+	room.service.Proc.Reg(&proto.InvalidTargetMsg{}, onInvalidTargetMsg)
 }
 
 func onHiContent(hc *message.HiContent) {
 	himsg := message.HiMsg{Msg: fmt.Sprintf("hi %d,I'm %s.", hc.UID, room.service.Name)}
-	s := room.service.Rpcss.Get(hc.AID)
-	if s != nil {
-		_ = s.Forward(hc.UID, &himsg)
-	}
+	room.service.Send(hc.UID, himsg)
 }
 
 func main() {
-	if room.Subscribe() != nil {
-		return
-	}
 	room.service.Main()
 }

@@ -14,7 +14,7 @@ import (
 type Service struct {
 	Name string //服务器名字
 	Proc *msg.Processor
-	srpc server.Srpc
+	Srpc server.Srpc
 
 	addr *string //参数，代理地址
 	h    *bool   //参数，帮助
@@ -26,8 +26,8 @@ func NewService(sid message.SERVICE, sche uint32) *Service {
 	ret.addr = flag.String("addr", ":10000", "代理服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
-	ret.srpc.Info.Type = uint32(sid)
-	ret.srpc.Info.Sche = sche
+	ret.Srpc.Info.Type = uint32(sid)
+	ret.Srpc.Info.Sche = sche
 	ret.Proc = msg.NewProcessor(msg.ProtoHelper{})
 	return ret
 }
@@ -35,7 +35,7 @@ func NewService(sid message.SERVICE, sche uint32) *Service {
 func (s *Service) Send(target uint32, msg interface{}) error {
 	fmsg, err := s.Proc.WrapFM(target, msg)
 	if err == nil {
-		return s.srpc.Send(fmsg)
+		return s.Srpc.Send(fmsg.(*arpc.ForwardMsg))
 	}
 	return err
 }
@@ -48,15 +48,15 @@ func (s *Service) Main() {
 		flag.Usage()
 		return
 	}
-	s.srpc.Info.Addr = utils.PublishTCPAddr(*s.addr)
-	s.srpc.Addr = *s.addr
+	s.Srpc.Info.Addr = utils.PublishTCPAddr(*s.addr)
+	s.Srpc.Addr = *s.addr
 	over := make(chan int)
 	go func() {
-		err := s.srpc.Connect()
+		err := s.Srpc.Connect()
 		if err == nil {
 			for {
 				var in *arpc.ForwardMsg
-				in, err = s.srpc.Recv()
+				in, err = s.Srpc.Recv()
 				if err != nil {
 					break
 				}

@@ -33,7 +33,7 @@ func init() {
 func (r *RPC) Send(target uint32, msg interface{}) error {
 	fmsg, err := r.proc.WrapFM(target, msg)
 	if err == nil {
-		return r.crpc.Send(fmsg)
+		return r.crpc.Send(fmsg.(*arpc.ForwardMsg))
 	}
 	return err
 }
