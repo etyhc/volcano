@@ -2,8 +2,8 @@ package service
 
 import (
 	"flag"
+	"lemna/agent/server"
 	"lemna/arpc"
-	"lemna/arpc/server"
 	"lemna/logger"
 	"lemna/msg"
 	"lemna/utils"
@@ -14,7 +14,8 @@ import (
 type Service struct {
 	Name string //服务器名字
 	Proc *msg.Processor
-	Srpc server.Srpc
+	Srpc arpc.Srpc
+	Info server.Info
 
 	addr *string //参数，代理地址
 	h    *bool   //参数，帮助
@@ -26,8 +27,8 @@ func NewService(sid message.SERVICE, sche uint32) *Service {
 	ret.addr = flag.String("addr", ":10000", "代理服务器地址")
 	ret.h = flag.Bool("h", false, "this help")
 	ret.Name = sid.String()
-	ret.Srpc.Info.Type = uint32(sid)
-	ret.Srpc.Info.Sche = sche
+	ret.Info.Type = uint32(sid)
+	ret.Info.Sche = sche
 	ret.Proc = msg.NewProcessor(msg.ProtoHelper{})
 	return ret
 }
@@ -48,7 +49,7 @@ func (s *Service) Main() {
 		flag.Usage()
 		return
 	}
-	s.Srpc.Info.Addr = utils.PublishTCPAddr(*s.addr)
+	s.Info.Addr = utils.PublishTCPAddr(*s.addr)
 	s.Srpc.Addr = *s.addr
 	over := make(chan int)
 	go func() {

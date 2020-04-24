@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"lemna/arpc"
-	"lemna/arpc/client"
 	"lemna/logger"
 	"lemna/msg"
 	"volcano/message"
@@ -11,7 +10,7 @@ import (
 
 type RPC struct {
 	name string
-	crpc client.Crpc
+	crpc arpc.Crpc
 	proc *msg.Processor
 }
 

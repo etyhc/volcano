@@ -1,0 +1,18 @@
+syntax = "proto3";
+package message;
+
+enum SERVICE{
+  NONE=0;
+  LOBBY=1;
+  MATCH=2;
+  ROOM=3;
+}
+
+message CallReqMsg {
+  string call = 1;
+  repeated string args = 2;
+}
+
+message CallResMsg {
+  bytes raw = 1;
+}

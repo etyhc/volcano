@@ -1,6 +1,6 @@
 module volcano
 
-go 1.12
+go 1.14
 
 replace (
 	cloud.google.com/go => github.com/googleapis/google-cloud-go v0.37.4
@@ -25,6 +25,5 @@ replace (
 
 require (
 	github.com/golang/protobuf v1.3.1
-	google.golang.org/grpc v1.19.0
 	lemna v0.0.0-00010101000000-000000000000
 )

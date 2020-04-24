@@ -1,13 +1,6 @@
 syntax = "proto3";
 package message;
 
-enum SERVICE{
-  NONE=0;
-  LOBBY=1;
-  MATCH=2;
-  ROOM=3;
-}
-
 message HiMsg {
   string msg = 1;
 }
