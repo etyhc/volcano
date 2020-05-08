@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"lemna/agent/proto"
 	"lemna/agent/server"
+	"lemna/arpc/msg"
 	"lemna/logger"
-	"lemna/msg"
 	"volcano/message"
 	"volcano/service"
 )

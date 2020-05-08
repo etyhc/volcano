@@ -2,8 +2,8 @@ package main
 
 import (
 	"lemna/agent/server"
+	"lemna/arpc/msg"
 	"lemna/logger"
-	"lemna/msg"
 	"unicode/utf8"
 	"volcano/message"
 	"volcano/service"

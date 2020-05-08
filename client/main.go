@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"lemna/arpc"
+	"lemna/arpc/msg"
 	"lemna/logger"
-	"lemna/msg"
 	"volcano/message"
 )
 

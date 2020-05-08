@@ -4,8 +4,8 @@ import (
 	"flag"
 	"lemna/agent/server"
 	"lemna/arpc"
+	"lemna/arpc/msg"
 	"lemna/logger"
-	"lemna/msg"
 	"lemna/utils"
 	"volcano/message"
 )
@@ -33,6 +33,7 @@ func NewService(sid message.SERVICE, sche uint32) *Service {
 	return ret
 }
 
+//Send 发送指令给客户端
 func (s *Service) Send(target uint32, msg interface{}) error {
 	fmsg, err := s.Proc.WrapFM(target, msg)
 	if err == nil {
